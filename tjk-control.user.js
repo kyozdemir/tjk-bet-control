@@ -511,7 +511,7 @@
 
             var hasU = race.singleBets.includes("U");
             var hasT = race.singleBets.includes("T");
-            var has5B = race.singleBets.includes("5B");
+            var has5B = race.singleBets.includes("5 Lİ");
 
             if (pageData.isNoTabelaBesliCountry) {
                 if (hasT) addError(rNo, "FAZLA", "Bu ülkede Tabela Bahis (T) alınmaz.");
