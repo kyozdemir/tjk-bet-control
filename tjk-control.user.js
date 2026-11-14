@@ -21,7 +21,7 @@
             4: { required: ["3G"] }
         },
         7: {
-            1: { required: ["7P"], domesticRequired: ["7G"], foreignOptional: ["7G"] },
+            1: { required: ["7P"], domesticRequired: ["7G"], domesticRequired: ["3G"], foreignOptional: ["7G"] },
             2: { required: ["6G"] },
             3: { required: ["5G"] },
             4: { required: ["4G"] },
@@ -29,7 +29,7 @@
         },
         8: {
             1: { required: ["1. 6G"] },
-            2: { required: ["7P"], domesticRequired: ["7G"], foreignOptional: ["7G"] },
+            2: { required: ["7P"], domesticRequired: ["7G"], domesticRequired: ["3G"], foreignOptional: ["7G"] },
             3: { required: ["2. 6G"] },
             4: { required: ["5G"] },
             5: { required: ["4G"] },
@@ -38,7 +38,7 @@
         9: {
             1: { required: ["1. 6G"] },
             2: { required: ["1. 5G"] },
-            3: { required: ["7P"], domesticRequired: ["7G"], foreignOptional: ["7G"] },
+            3: { required: ["7P"], domesticRequired: ["7G"], domesticRequired: ["3G"], foreignOptional: ["7G"] },
             4: { required: ["2. 6G"] },
             5: { required: ["2. 5G"] },
             6: { required: ["4G"] },
@@ -48,7 +48,7 @@
             1: { required: ["1. 6G"] },
             2: { required: ["1. 5G"] },
             3: { required: ["1. 4G"] },
-            4: { required: ["7P"], domesticRequired: ["7G"], foreignOptional: ["7G"] },
+            4: { required: ["7P"], domesticRequired: ["7G"], domesticRequired: ["3G"], foreignOptional: ["7G"] },
             5: { required: ["2. 6G"] },
             6: { required: ["2. 5G"] },
             7: { required: ["2. 4G"] },
@@ -76,22 +76,22 @@
         "Io": "Sıralı İkili (Io)",
         "U": "Üçlü Bahis (U)",
         "T": "Tabela Bahis (T)",
-        "5B": "Sıralı 5'li Bahis (5B)",
+        "5B": "SIRALI 5 Lİ BAHİS (5B)",
         "Ç": "Çifte (Ç)",
-        "6G": "6'lı Ganyan (6G)",
-        "1. 6G": "1. 6'lı Ganyan (6G)",
-        "2. 6G": "2. 6'lı Ganyan (6G)",
-        "5G": "5'li Ganyan (5G)",
-        "1. 5G": "1. 5'li Ganyan (5G)",
-        "2. 5G": "2. 5'li Ganyan (5G)",
-        "4G": "4'lü Ganyan (4G)",
-        "1. 4G": "1. 4'lü Ganyan (4G)",
-        "2. 4G": "2. 4'lü Ganyan (4G)",
-        "3G": "3'lü Ganyan (3G)",
-        "1. 3G": "1. 3'lü Ganyan (3G)",
-        "2. 3G": "2. 3'lü Ganyan (3G)",
-        "7G": "7'li Ganyan (7G)",
-        "7P": "7'li Plase (7P)"
+        "6G": "6'LI GANYAN (6G)",
+        "1. 6G": "1. 6'LI GANYAN (6G)",
+        "2. 6G": "2. 6'LI GANYAN (6G)",
+        "5G": "5'Lİ GANYAN (5G)",
+        "1. 5G": "1. 5'Lİ GANYAN (5G)",
+        "2. 5G": "2. 5'Lİ GANYAN (5G)",
+        "4G": "4'LÜ GANYAN (4G)",
+        "1. 4G": "1. 4'LÜ GANYAN (4G)",
+        "2. 4G": "2. 4'LÜ GANYAN (4G)",
+        "3G": "3'LÜ GANYAN (3G)",
+        "1. 3G": "1. 3'LÜ GANYAN (3G)",
+        "2. 3G": "2. 3'LÜ GANYAN (3G)",
+        "7G": "7'Lİ GANYAN (7G)",
+        "7P": "7'Lİ PLASE (7P)"
     };
 
     var autoHighlightActive = false;
@@ -320,7 +320,7 @@
                     if (!singleBets.includes("T")) singleBets.push("T");
                 }
 
-                if (text.includes("BEŞLİ") || text.includes("5'Lİ BAHİS")) {
+                if (text.includes("BEŞLİ") || text.includes("5 Lİ BAHİS")) {
                     if (!singleBets.includes("5B")) singleBets.push("5B");
                 }
 
