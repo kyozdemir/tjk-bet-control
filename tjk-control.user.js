@@ -5,8 +5,8 @@
 // @description  United Racing - TJK tekil ve toplu yarış programı bahis kontrol aracı
 // @match        *://*.tjk.org/*
 // @grant        none
-// @updateURL    BURAYA_GITHUB_RAW_LINKI_GELECEK
-// @downloadURL  BURAYA_GITHUB_RAW_LINKI_GELECEK
+// @updateURL    https://raw.githubusercontent.com/kyozdemir/tjk-bet-control/refs/heads/main/tjk-control.user.js
+// @downloadURL  https://raw.githubusercontent.com/kyozdemir/tjk-bet-control/refs/heads/main/tjk-control.user.js
 // ==/UserScript==
 
 (function() {
