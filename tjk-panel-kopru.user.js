@@ -8,8 +8,8 @@
 // @connect      tjk.org
 // @connect      www.tjk.org
 // @connect      *.tjk.org
-// @updateURL    BURAYA_YENI_DOSYANIN_GITHUB_RAW_LINKI_GELECEK
-// @downloadURL  BURAYA_YENI_DOSYANIN_GITHUB_RAW_LINKI_GELECEK
+// @updateURL    https://github.com/kyozdemir/tjk-bet-control/raw/refs/heads/main/tjk-panel-kopru.user.js
+// @downloadURL  https://github.com/kyozdemir/tjk-bet-control/raw/refs/heads/main/tjk-panel-kopru.user.js
 // ==/UserScript==
 
 (function() {
