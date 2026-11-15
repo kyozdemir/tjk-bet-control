@@ -1,15 +1,15 @@
 // ==UserScript==
 // @name         TJK Lokal Panel Koprusu (Kagit Kontrol Birimi)
 // @namespace    https://github.com/
-// @version      1.1
+// @version      1.2
 // @description  United Racing - Lokal kontrol paneline tjk.org verilerini otomatik aktarir
 // @match        file:///*
 // @grant        GM_xmlhttpRequest
 // @connect      tjk.org
 // @connect      www.tjk.org
 // @connect      *.tjk.org
-// @updateURL    https://raw.githubusercontent.com/kyozdemir/tjk-bet-control/refs/heads/main/tjk-control.user.js
-// @downloadURL  https://raw.githubusercontent.com/kyozdemir/tjk-bet-control/refs/heads/main/tjk-control.user.js
+// @updateURL    https://github.com/kyozdemir/tjk-bet-control/raw/refs/heads/main/tjk-panel-kopru.user.js
+// @downloadURL  https://github.com/kyozdemir/tjk-bet-control/raw/refs/heads/main/tjk-panel-kopru.user.js
 // ==/UserScript==
 
 (function() {
