@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TJK Lokal Panel Koprusu (Kagit Kontrol Birimi)
 // @namespace    https://github.com/
-// @version      1.2
+// @version      1.3
 // @description  United Racing - Lokal kontrol paneline tjk.org verilerini otomatik aktarir
 // @match        file:///*
 // @grant        GM_xmlhttpRequest
@@ -176,7 +176,7 @@
             var trackName = tabEl.innerText.trim();
             var rawHref = tabEl.getAttribute('href') || "";
 
-            if (!rawHref || rawHref === "#" || tabEl.classList.contains('current')) {
+            if (!rawHref || rawHref === "#" || rawHref.indexOf("javascript") === 0 || tabEl.classList.contains('current')) {
                 return parseTrackDoc(mainDoc, trackName);
             }
 
@@ -189,20 +189,32 @@
         return programs;
     }
 
+    function sendResponseToPage(payloadObj) {
+        var serialized = JSON.stringify(payloadObj);
+        window.dispatchEvent(new CustomEvent('tjk-live-data-response', {
+            detail: serialized
+        }));
+    }
+
     window.addEventListener('tjk-request-live-data', async function(ev) {
-        var pinfo = (ev.detail && ev.detail.pinfo) ? ev.detail.pinfo : "";
+        var reqData = {};
+        if (ev && ev.detail) {
+            if (typeof ev.detail === 'string') {
+                try { reqData = JSON.parse(ev.detail); } catch (e) {}
+            } else {
+                reqData = ev.detail;
+            }
+        }
+        var pinfo = reqData.pinfo || document.documentElement.dataset.tjkRequestPinfo || "";
         try {
             var programs = await fetchAllFromTjk(pinfo);
-            window.dispatchEvent(new CustomEvent('tjk-live-data-response', {
-                detail: { ok: true, programs: programs }
-            }));
+            sendResponseToPage({ ok: true, programs: programs });
         } catch (err) {
-            window.dispatchEvent(new CustomEvent('tjk-live-data-response', {
-                detail: { ok: false, error: err.message }
-            }));
+            sendResponseToPage({ ok: false, error: err.message });
         }
     });
 
+    document.documentElement.dataset.tjkBridgeReady = "1";
     window.TJK_BRIDGE_READY = true;
     window.dispatchEvent(new Event('tjk-bridge-ready'));
 })();
