@@ -1,21 +1,20 @@
 // ==UserScript==
 // @name         TJK Lokal Panel Koprusu (Kagit Kontrol Birimi)
 // @namespace    https://github.com/
-// @version      1.0
+// @version      1.1
 // @description  United Racing - Lokal kontrol paneline tjk.org verilerini otomatik aktarir
 // @match        file:///*
 // @grant        GM_xmlhttpRequest
 // @connect      tjk.org
 // @connect      www.tjk.org
 // @connect      *.tjk.org
-// @updateURL    https://github.com/kyozdemir/tjk-bet-control/raw/refs/heads/main/tjk-panel-kopru.user.js
-// @downloadURL  https://github.com/kyozdemir/tjk-bet-control/raw/refs/heads/main/tjk-panel-kopru.user.js
+// @updateURL    https://raw.githubusercontent.com/kyozdemir/tjk-bet-control/refs/heads/main/tjk-control.user.js
+// @downloadURL  https://raw.githubusercontent.com/kyozdemir/tjk-bet-control/refs/heads/main/tjk-control.user.js
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    // Yalnizca bizim lokal kontrol paneli HTML dosyamizda aktif ol
     if (!document.getElementById('tjk-local-qa-app')) return;
 
     var TR_I = "\u0130";
@@ -115,15 +114,30 @@
             });
 
             var horseCount = 0;
+            var scratchedCount = 0;
+            var coupledCount = 0;
             var raceTable = findRaceTable(container);
+
             if (raceTable) {
                 var cells = raceTable.querySelectorAll('.gunluk-GunlukYarisProgrami-AtAdi');
-                horseCount = cells.length > 0 ? cells.length : raceTable.querySelectorAll('tbody tr').length;
+                var rows = cells.length > 0
+                    ? Array.from(cells).map(function(td) { return td.closest('tr'); })
+                    : Array.from(raceTable.querySelectorAll('tbody tr'));
+
+                horseCount = rows.length;
+                rows.forEach(function(tr) {
+                    if (!tr) return;
+                    var rowText = tr.innerText.toLocaleUpperCase('tr-TR');
+                    if (rowText.includes("KO" + TR_S + "MAZ")) scratchedCount++;
+                    if (rowText.includes("EK" + TR_U + "R" + TR_I) || tr.querySelector('[class*="ekuri" i]')) coupledCount++;
+                });
             }
 
             return {
                 raceNo: raceNo,
                 horseCount: horseCount,
+                scratchedCount: scratchedCount,
+                coupledCount: coupledCount,
                 singleBets: singleBets,
                 multiBets: multiBets
             };
@@ -137,7 +151,6 @@
         var baseUrl = "https://www.tjk.org/TR/YarisSever/Info/Page/GunlukYarisProgrami";
         var targetUrl = baseUrl;
 
-        // TXT dosyasindaki Pinfo=YYYYMMDD tarihini URL'ye ekle
         if (pinfo && /^\d{8}$/.test(pinfo)) {
             var dd = pinfo.slice(6, 8);
             var mm = pinfo.slice(4, 6);
@@ -149,7 +162,6 @@
         var mainDoc = parser.parseFromString(mainHtml, 'text/html');
         var tabLinks = Array.from(mainDoc.querySelectorAll('ul.gunluk-tabs li a'));
 
-        // Tarih parametresi bos donerse varsayilan gunluk sayfayi dene
         if (tabLinks.length === 0 && targetUrl !== baseUrl) {
             mainHtml = await gmGetHtml(baseUrl);
             mainDoc = parser.parseFromString(mainHtml, 'text/html');
