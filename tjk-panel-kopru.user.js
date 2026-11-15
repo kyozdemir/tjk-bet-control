@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         TJK Lokal Panel Koprusu (Kagit Kontrol Birimi)
 // @namespace    https://github.com/
-// @version      1.3
-// @description  United Racing - Lokal kontrol paneline tjk.org verilerini otomatik aktarir
+// @version      1.4
+// @description  United Racing - Lokal kontrol paneline tjk.org verilerini (tarih/Pinfo uyumlu) otomatik aktarir
 // @match        file:///*
 // @grant        GM_xmlhttpRequest
 // @connect      tjk.org
@@ -33,11 +33,13 @@
     var RX_5B = new RegExp("5['\\u2019\\s]*L[I\\u0130]\\s*BAH[I\\u0130]S");
     var RX_3B = new RegExp("3['\\u2019\\s]*L[U\\u00dc]\\s*BAH[I\\u0130]S");
 
-    function gmGetHtml(url) {
+    function gmRequestHtml(options) {
         return new Promise(function(resolve, reject) {
             GM_xmlhttpRequest({
-                method: "GET",
-                url: url,
+                method: options.method || "GET",
+                url: options.url,
+                headers: options.headers || {},
+                data: options.data || undefined,
                 onload: function(res) {
                     if (res.status >= 200 && res.status < 400) {
                         resolve(res.responseText);
@@ -146,47 +148,128 @@
         return { trackName: trackName, races: races };
     }
 
+    function extractDateFromDoc(doc, tabLinks) {
+        var dateInput = doc.querySelector('#QueryParameter_Tarih, input[name="QueryParameter_Tarih"]');
+        if (dateInput && dateInput.value && /\d{2}[./]\d{2}[./]\d{4}/.test(dateInput.value)) {
+            return dateInput.value.trim().replace(/\./g, '/');
+        }
+        for (var i = 0; i < tabLinks.length; i++) {
+            var href = tabLinks[i].getAttribute('href') || "";
+            var m = href.match(/QueryParameter_Tarih=(\d{2})(?:%2F|\/)(\d{2})(?:%2F|\/)(\d{4})/i);
+            if (m) {
+                return m[1] + "/" + m[2] + "/" + m[3];
+            }
+        }
+        return "";
+    }
+
     async function fetchAllFromTjk(pinfo) {
         var parser = new DOMParser();
-        var baseUrl = "https://www.tjk.org/TR/YarisSever/Info/Page/GunlukYarisProgrami";
-        var targetUrl = baseUrl;
+        var pageBaseUrl = "https://www.tjk.org/TR/YarisSever/Info/Page/GunlukYarisProgrami";
+        var dataBaseUrl = "https://www.tjk.org/TR/YarisSever/Info/Data/GunlukYarisProgrami";
+        var ajaxHeaders = { "X-Requested-With": "XMLHttpRequest" };
 
+        var requestedDate = "";
+        var encodedDate = "";
         if (pinfo && /^\d{8}$/.test(pinfo)) {
             var dd = pinfo.slice(6, 8);
             var mm = pinfo.slice(4, 6);
             var yyyy = pinfo.slice(0, 4);
-            targetUrl = baseUrl + "?QueryParameter_Tarih=" + dd + "%2F" + mm + "%2F" + yyyy;
+            requestedDate = dd + "/" + mm + "/" + yyyy;
+            encodedDate = dd + "%2F" + mm + "%2F" + yyyy;
         }
 
-        var mainHtml = await gmGetHtml(targetUrl);
-        var mainDoc = parser.parseFromString(mainHtml, 'text/html');
-        var tabLinks = Array.from(mainDoc.querySelectorAll('ul.gunluk-tabs li a'));
+        var mainDoc = null;
+        var tabLinks = [];
 
-        if (tabLinks.length === 0 && targetUrl !== baseUrl) {
-            mainHtml = await gmGetHtml(baseUrl);
-            mainDoc = parser.parseFromString(mainHtml, 'text/html');
+        if (requestedDate) {
+            // 1. TJK.org AJAX Data endpoint (tarih secici burayi kullanir)
+            try {
+                var dataGetUrl = dataBaseUrl + "?QueryParameter_Tarih=" + encodedDate;
+                var html1 = await gmRequestHtml({ method: "GET", url: dataGetUrl, headers: ajaxHeaders });
+                var doc1 = parser.parseFromString(html1, 'text/html');
+                var tabs1 = Array.from(doc1.querySelectorAll('ul.gunluk-tabs li a'));
+                if (tabs1.length > 0) {
+                    mainDoc = doc1;
+                    tabLinks = tabs1;
+                }
+            } catch (e1) {}
+
+            // 2. AJAX POST fallback (bazi ASP.NET MVC aksiyonlari POST bekler)
+            if (tabLinks.length === 0) {
+                try {
+                    var html2 = await gmRequestHtml({
+                        method: "POST",
+                        url: dataBaseUrl,
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest",
+                            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                        },
+                        data: "QueryParameter_Tarih=" + encodedDate
+                    });
+                    var doc2 = parser.parseFromString(html2, 'text/html');
+                    var tabs2 = Array.from(doc2.querySelectorAll('ul.gunluk-tabs li a'));
+                    if (tabs2.length > 0) {
+                        mainDoc = doc2;
+                        tabLinks = tabs2;
+                    }
+                } catch (e2) {}
+            }
+
+            // 3. Page endpoint fallback with QueryParameter_Tarih
+            if (tabLinks.length === 0) {
+                var pageUrlWithDate = pageBaseUrl + "?QueryParameter_Tarih=" + encodedDate;
+                var html3 = await gmRequestHtml({ method: "GET", url: pageUrlWithDate });
+                var doc3 = parser.parseFromString(html3, 'text/html');
+                var tabs3 = Array.from(doc3.querySelectorAll('ul.gunluk-tabs li a'));
+                if (tabs3.length > 0) {
+                    mainDoc = doc3;
+                    tabLinks = tabs3;
+                }
+            }
+
+            if (tabLinks.length === 0) {
+                throw new Error("TJK.org uzerinde " + requestedDate + " tarihli program henuz yayinlanmamis veya sekmeler bulunamadi.");
+            }
+        } else {
+            // Pinfo yoksa bugunun programini cek
+            var defaultHtml = await gmRequestHtml({ method: "GET", url: pageBaseUrl });
+            mainDoc = parser.parseFromString(defaultHtml, 'text/html');
             tabLinks = Array.from(mainDoc.querySelectorAll('ul.gunluk-tabs li a'));
+            if (tabLinks.length === 0) {
+                throw new Error("TJK.org sayfasinda gunluk program sekmeleri bulunamadi.");
+            }
         }
 
-        if (tabLinks.length === 0) {
-            throw new Error("TJK.org sayfasinda gunluk program sekmeleri bulunamadi.");
-        }
+        var fetchedDate = extractDateFromDoc(mainDoc, tabLinks);
 
         var programs = await Promise.all(tabLinks.map(async function(tabEl) {
             var trackName = tabEl.innerText.trim();
             var rawHref = tabEl.getAttribute('href') || "";
 
-            if (!rawHref || rawHref === "#" || rawHref.indexOf("javascript") === 0 || tabEl.classList.contains('current')) {
+            var isCurrentTab = !rawHref || rawHref === "#" || rawHref.indexOf("javascript") === 0 || tabEl.classList.contains('current');
+            if (isCurrentTab && (!requestedDate || !fetchedDate || fetchedDate === requestedDate)) {
                 return parseTrackDoc(mainDoc, trackName);
             }
 
-            var fullUrl = new URL(rawHref, "https://www.tjk.org").href;
-            var tabHtml = await gmGetHtml(fullUrl);
+            var urlObj = new URL(rawHref || dataBaseUrl, "https://www.tjk.org");
+            if (requestedDate) {
+                urlObj.searchParams.set("QueryParameter_Tarih", requestedDate);
+            }
+            var tabHtml = await gmRequestHtml({
+                method: "GET",
+                url: urlObj.href,
+                headers: ajaxHeaders
+            });
             var tabDoc = parser.parseFromString(tabHtml, 'text/html');
             return parseTrackDoc(tabDoc, trackName);
         }));
 
-        return programs;
+        return {
+            programs: programs,
+            requestedDate: requestedDate,
+            fetchedDate: fetchedDate || requestedDate
+        };
     }
 
     function sendResponseToPage(payloadObj) {
@@ -207,8 +290,13 @@
         }
         var pinfo = reqData.pinfo || document.documentElement.dataset.tjkRequestPinfo || "";
         try {
-            var programs = await fetchAllFromTjk(pinfo);
-            sendResponseToPage({ ok: true, programs: programs });
+            var result = await fetchAllFromTjk(pinfo);
+            sendResponseToPage({
+                ok: true,
+                programs: result.programs,
+                requestedDate: result.requestedDate,
+                fetchedDate: result.fetchedDate
+            });
         } catch (err) {
             sendResponseToPage({ ok: false, error: err.message });
         }
